@@ -1,0 +1,746 @@
+{
+ "dpi": 200,
+ "lines": [
+  {
+   "text": "We are required to report the below demographic information as a condition of grant and other funding that",
+   "bbox": [
+    122,
+    233,
+    1503,
+    276
+   ]
+  },
+  {
+   "text": "allows us to offer this and other programs free of charge. Please help us by selecting all that apply.",
+   "bbox": [
+    122,
+    271,
+    1371,
+    313
+   ]
+  },
+  {
+   "text": "13. The following statements apply to me. (Select all that apply)",
+   "bbox": [
+    122,
+    325,
+    913,
+    367
+   ]
+  },
+  {
+   "text": "Person living with a mental illness/ mental health disorder",
+   "bbox": [
+    122,
+    372,
+    879,
+    413
+   ]
+  },
+  {
+   "text": "Family member of a person living with a mental illness/ mental health disorder",
+   "bbox": [
+    122,
+    420,
+    1133,
+    461
+   ]
+  },
+  {
+   "text": "Parent or caregiver of a child, youth or young adult with a behavioral health disorder",
+   "bbox": [
+    122,
+    465,
+    1207,
+    506
+   ]
+  },
+  {
+   "text": "Mental health provider or other professional",
+   "bbox": [
+    122,
+    511,
+    712,
+    552
+   ]
+  },
+  {
+   "text": "None",
+   "bbox": [
+    122,
+    556,
+    224,
+    597
+   ]
+  },
+  {
+   "text": "14. I am a Missouri resident.  Yes  No",
+   "bbox": [
+    122,
+    640,
+    641,
+    683
+   ]
+  },
+  {
+   "text": "15.Background/Occupation",
+   "bbox": [
+    124,
+    695,
+    443,
+    735
+   ]
+  },
+  {
+   "text": "16. Ethnicity/ Race",
+   "bbox": [
+    474,
+    698,
+    701,
+    738
+   ]
+  },
+  {
+   "text": "Gender",
+   "bbox": [
+    737,
+    698,
+    827,
+    738
+   ]
+  },
+  {
+   "text": "18.Sexual Orientation",
+   "bbox": [
+    929,
+    699,
+    1167,
+    737
+   ]
+  },
+  {
+   "text": "19. Age",
+   "bbox": [
+    1198,
+    698,
+    1288,
+    738
+   ]
+  },
+  {
+   "text": "20. Military Status",
+   "bbox": [
+    1349,
+    698,
+    1572,
+    738
+   ]
+  },
+  {
+   "text": "Student",
+   "bbox": [
+    124,
+    736,
+    262,
+    777
+   ]
+  },
+  {
+   "text": "Black or African",
+   "bbox": [
+    472,
+    736,
+    703,
+    777
+   ]
+  },
+  {
+   "text": "Female",
+   "bbox": [
+    735,
+    739,
+    854,
+    776
+   ]
+  },
+  {
+   "text": "Straight/",
+   "bbox": [
+    937,
+    738,
+    1081,
+    777
+   ]
+  },
+  {
+   "text": "Under",
+   "bbox": [
+    1199,
+    738,
+    1309,
+    777
+   ]
+  },
+  {
+   "text": "Active Military",
+   "bbox": [
+    1349,
+    738,
+    1547,
+    775
+   ]
+  },
+  {
+   "text": "Educator",
+   "bbox": [
+    124,
+    773,
+    276,
+    814
+   ]
+  },
+  {
+   "text": "American",
+   "bbox": [
+    509,
+    773,
+    628,
+    814
+   ]
+  },
+  {
+   "text": "Male",
+   "bbox": [
+    735,
+    776,
+    829,
+    813
+   ]
+  },
+  {
+   "text": "Heterosexual",
+   "bbox": [
+    977,
+    774,
+    1134,
+    813
+   ]
+  },
+  {
+   "text": "18",
+   "bbox": [
+    1235,
+    774,
+    1265,
+    813
+   ]
+  },
+  {
+   "text": "Veteran",
+   "bbox": [
+    1349,
+    776,
+    1473,
+    813
+   ]
+  },
+  {
+   "text": "Law enforcement",
+   "bbox": [
+    124,
+    811,
+    382,
+    852
+   ]
+  },
+  {
+   "text": "Asian",
+   "bbox": [
+    472,
+    811,
+    576,
+    852
+   ]
+  },
+  {
+   "text": "Non-binary",
+   "bbox": [
+    735,
+    813,
+    899,
+    850
+   ]
+  },
+  {
+   "text": " Lesbian",
+   "bbox": [
+    937,
+    812,
+    1066,
+    851
+   ]
+  },
+  {
+   "text": "18-24",
+   "bbox": [
+    1199,
+    812,
+    1304,
+    851
+   ]
+  },
+  {
+   "text": "Family Member",
+   "bbox": [
+    1349,
+    818,
+    1560,
+    855
+   ]
+  },
+  {
+   "text": "Physician/Nurse",
+   "bbox": [
+    124,
+    849,
+    365,
+    890
+   ]
+  },
+  {
+   "text": "Bi/Multi-Racial",
+   "bbox": [
+    472,
+    849,
+    693,
+    890
+   ]
+  },
+  {
+   "text": " Other",
+   "bbox": [
+    737,
+    852,
+    838,
+    889
+   ]
+  },
+  {
+   "text": "Gay",
+   "bbox": [
+    937,
+    851,
+    1023,
+    890
+   ]
+  },
+  {
+   "text": "25-34",
+   "bbox": [
+    1199,
+    851,
+    1304,
+    890
+   ]
+  },
+  {
+   "text": "(of military",
+   "bbox": [
+    1384,
+    852,
+    1507,
+    889
+   ]
+  },
+  {
+   "text": "Social Worker",
+   "bbox": [
+    124,
+    888,
+    337,
+    929
+   ]
+  },
+  {
+   "text": "Caucasian",
+   "bbox": [
+    472,
+    888,
+    633,
+    929
+   ]
+  },
+  {
+   "text": "Bisexual",
+   "bbox": [
+    937,
+    889,
+    1074,
+    928
+   ]
+  },
+  {
+   "text": "35-44",
+   "bbox": [
+    1199,
+    889,
+    1304,
+    928
+   ]
+  },
+  {
+   "text": "service member",
+   "bbox": [
+    1384,
+    886,
+    1563,
+    923
+   ]
+  },
+  {
+   "text": "Mental Health",
+   "bbox": [
+    124,
+    925,
+    343,
+    966
+   ]
+  },
+  {
+   "text": "Hispanic/",
+   "bbox": [
+    472,
+    925,
+    625,
+    966
+   ]
+  },
+  {
+   "text": "Other",
+   "bbox": [
+    936,
+    926,
+    1041,
+    965
+   ]
+  },
+  {
+   "text": "45-54",
+   "bbox": [
+    1199,
+    926,
+    1304,
+    965
+   ]
+  },
+  {
+   "text": "or veteran)",
+   "bbox": [
+    1384,
+    920,
+    1509,
+    957
+   ]
+  },
+  {
+   "text": "Provider",
+   "bbox": [
+    164,
+    963,
+    270,
+    1004
+   ]
+  },
+  {
+   "text": "Latino",
+   "bbox": [
+    509,
+    963,
+    586,
+    1004
+   ]
+  },
+  {
+   "text": "55-64",
+   "bbox": [
+    1199,
+    963,
+    1304,
+    1002
+   ]
+  },
+  {
+   "text": "None",
+   "bbox": [
+    1349,
+    962,
+    1444,
+    999
+   ]
+  },
+  {
+   "text": "Other",
+   "bbox": [
+    124,
+    1000,
+    237,
+    1041
+   ]
+  },
+  {
+   "text": "Hawaiian/Pacific",
+   "bbox": [
+    472,
+    1002,
+    706,
+    1041
+   ]
+  },
+  {
+   "text": "65-74",
+   "bbox": [
+    1199,
+    1002,
+    1304,
+    1041
+   ]
+  },
+  {
+   "text": "Islander",
+   "bbox": [
+    509,
+    1038,
+    604,
+    1077
+   ]
+  },
+  {
+   "text": "75-84",
+   "bbox": [
+    1199,
+    1039,
+    1304,
+    1078
+   ]
+  },
+  {
+   "text": "Native",
+   "bbox": [
+    472,
+    1075,
+    586,
+    1114
+   ]
+  },
+  {
+   "text": "85+",
+   "bbox": [
+    1199,
+    1076,
+    1279,
+    1115
+   ]
+  },
+  {
+   "text": "American/",
+   "bbox": [
+    509,
+    1111,
+    634,
+    1150
+   ]
+  },
+  {
+   "text": "Alaskan Native",
+   "bbox": [
+    509,
+    1146,
+    684,
+    1186
+   ]
+  },
+  {
+   "text": "Other",
+   "bbox": [
+    474,
+    1183,
+    578,
+    1222
+   ]
+  },
+  {
+   "text": "21. Zip code (optional): _____________",
+   "bbox": [
+    122,
+    1312,
+    583,
+    1354
+   ]
+  },
+  {
+   "text": "22. How do you describe your community? Rural Urban Suburban",
+   "bbox": [
+    122,
+    1363,
+    1018,
+    1406
+   ]
+  },
+  {
+   "text": "23. Are you the parent/ caregiver of a child, youth, or young adult up to age 25 w/ a mental health condition?  Yes  No",
+   "bbox": [
+    122,
+    1414,
+    1574,
+    1457
+   ]
+  },
+  {
+   "text": "24. If yes, does your child, youth, or young adult up to age 25 have BOTH a mental health condition AND autism, a",
+   "bbox": [
+    222,
+    1465,
+    1572,
+    1508
+   ]
+  },
+  {
+   "text": "learning disability, or a developmental disability?  Yes  No",
+   "bbox": [
+    222,
+    1509,
+    955,
+    1548
+   ]
+  },
+  {
+   "text": "25. Have you ever experienced homelessness?  Yes  No",
+   "bbox": [
+    122,
+    1558,
+    860,
+    1600
+   ]
+  },
+  {
+   "text": "26. Have you ever been jailed or incarcerated?  Yes  No",
+   "bbox": [
+    122,
+    1609,
+    860,
+    1651
+   ]
+  },
+  {
+   "text": "27. Have you ever had a substance use disorder? (drugs or alcohol)  Yes  No",
+   "bbox": [
+    122,
+    1660,
+    1113,
+    1703
+   ]
+  }
+ ],
+ "drawings": [
+  {
+   "bbox": [
+    162,
+    728,
+    442,
+    730
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    518,
+    731,
+    701,
+    733
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    929,
+    731,
+    1168,
+    732
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    1387,
+    731,
+    1571,
+    733
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    607,
+    1216,
+    722,
+    1217
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    122,
+    1366,
+    662,
+    1403
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    122,
+    1417,
+    1428,
+    1454
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    344,
+    1468,
+    1579,
+    1506
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    222,
+    1511,
+    809,
+    1547
+   ],
+   "type": "f",
+   "items": "re"
+  },
+  {
+   "bbox": [
+    1236,
+    733,
+    1287,
+    735
+   ],
+   "type": "f",
+   "items": "re"
+  }
+ ]
+}

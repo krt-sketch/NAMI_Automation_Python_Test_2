@@ -1,0 +1,322 @@
+IMPLEMENTATION PLAN: NAMI FORM READER (EXPLORATORY, LOCAL, OFFLINE)
+====================================================================
+
+0. CONTEXT AND CONSTRAINTS
+--------------------------
+
+Goal: Read scanned or phone-photographed NAMI Basics Participant Evaluation
+forms. Extract Likert answers, checkbox states, and handwritten text, and
+write the results to JSON. This is an exploration to test feasibility.
+
+Hard constraints
+- Everything runs locally and makes NO network calls in normal operation.
+  Model weights are downloaded once, stored locally, and loaded from disk
+  (HF_HUB_OFFLINE=1, TRANSFORMERS_OFFLINE=1).
+- The design must be portable to a capable mobile phone later, so keep models
+  small and avoid heavy dependencies where there is a choice. Python is fine
+  for this exploration.
+- The form is a FIXED TEMPLATE with 3 pages. Process ONE document per run.
+  All input images belong to that document.
+- Inputs are scans or phone photos with perspective, paper curl, uneven
+  lighting, and sometimes cropped page edges.
+
+Pages (reference images are 1700x2200 px)
+  Page 1: Title, 4 fill-in-the-blank fields (handwriting on underlines),
+          Likert table A (6 rows), Likert table B (3 rows).
+  Page 2: Likert table C (5 rows), 5 free-text questions, Yes/No checkbox pair.
+  Page 3: Demographics Q13-Q27: many small checkboxes, a zip code line, an
+          "Other ____" line, and free-text handwriting (Q25 side comment and
+          a block-caps comment near Q27).
+
+Likert columns, in order: Strongly agree, Agree, Neutral, Disagree,
+Strongly disagree, N/A.
+
+Files in the project
+- dev_images/ref_page1.png, ref_page2.png, ref_page3.png : blank references
+- dev_images/ref_full_document.pdf : original source, possibly vector
+- dev_images/test_read_page{1,2,3}.jpg : raw photos (3072x4096) with
+  handwriting and marks
+- dev_images/test_align_page{1,2,3}.png : output of the existing aligner,
+  which is the quality baseline
+- test_aligner.py : working aligner (ORB, RANSAC homography, then
+  coarse-to-fine thin-plate-spline refinement)
+
+DO NOT RETUNE the constants at the top of test_aligner.py (MAX_FEATURES,
+RATIO_TEST, RANSAC_THRESHOLD, LOCAL_RADII, DENSE_FEATURES, BLOCK, CELL,
+MIN_PER_CELL, NEIGHBORS, MAX_DEVIATION, TPS_REGULARIZATION, GRID_STEP,
+MIN_CONTROL_POINTS). They were tuned in earlier testing. Edit the file in
+place. Do not rewrite it.
+
+Things NOT verified. Check them early:
+- The aligner reads references from templates/<page_type>/reference.png. The 
+  source files now exist.
+- Whether the files in templates/<page_type>/layout.json will work for template
+  geometry. Check these files. If these will not work, 
+  dev_images/ref_full_document.pdf contains vector data, and use Phase A to
+  extract the information.
+- TPS needs OpenCV contrib's "shape" module
+  (cv2.createThinPlateSplineShapeTransformer). Use opencv-contrib-python.
+- TrOCR's input size and the best crop strategy. Confirm on the model card.
+
+Working rules from the user's CLAUDE.md: Read files before editing. Do not
+guess. Cite source documentation. ASK BEFORE RUNNING COMMANDS. Keep solutions
+simple. Prefer edits over rewrites.
+
+
+1. PIPELINE OVERVIEW
+--------------------
+
+  1. Collect and validate input image paths.
+  2. Identify each page and fail hard on structural problems.
+  3. Align each page and save it to a temp directory.
+  4. Read the Likert tables on pages 1 and 2.
+  5. Read the checkboxes on pages 2 and 3.
+  6. Read the handwriting on pages 1, 2, and 3.
+  7. Write a JSON result.
+
+Steps 4-6 are independent and share the aligned grayscale images. Errors in
+steps 1-2 end execution. Detection problems in steps 4-6 are FLAGGED and
+processing continues.
+
+
+2. PHASE A: EXTRACT TEMPLATE GEOMETRY FROM THE PDF
+--------------------------------------------------
+
+Only run this if needed - again, ensure that the files in 
+templates/<page_type>/layout.json are insufficient first.
+
+  1. With permission, create a venv and install pymupdf.
+     Docs:
+       https://pymupdf.readthedocs.io/en/latest/page.html#Page.get_drawings
+       https://pymupdf.readthedocs.io/en/latest/page.html#Page.get_text
+  2. Run a read-only inspection script on ref_full_document.pdf:
+       - Per page, list the vector lines and rectangles (table borders,
+         checkbox squares, underlines).
+       - List the text words and blocks with positions.
+  3. Convert PDF points to reference pixels: px = pt * 200 / 72. This is
+     documented in test_aligner.py.
+  4. SANITY CHECK: Overlay the extracted rectangles on ref_page*.png and
+     confirm they line up. If the PDF is not vector, fall back to detecting
+     the grid and boxes from the reference PNGs with OpenCV line and contour
+     detection.
+  5. Write a geometry file (JSON or a Python dict) containing, in reference
+     pixel coordinates:
+       - Likert tables: for each table, the rows (with label text) and the
+         six column cells.
+       - Checkboxes: for each one, its rectangle, its label text, and its
+         group (for example Q14 Yes/No, Q19 Age).
+       - Handwriting regions: for each region, its rectangle, its question
+         text, and a flag for whether it overlaps a printed underline.
+         Likely regions are the 4 page 1 fields, the 5 page 2 answers, and
+         on page 3 the zip code, the "Other ____" line, and the Q25 and
+         block-text areas. Define the page 3 regions only after viewing
+         ref_page3.png.
+  6. Take question and label text from the PDF text, not from OCR.
+
+Deliverable: the geometry file plus an overlay image per page for visual
+verification.
+
+
+3. PHASE B: PIPELINE MODULES
+----------------------------
+
+Create a small package or a single pipeline.py, whichever is simpler. Keep
+configuration in one place.
+
+STEP 1: INPUT COLLECTION
+- Accept a folder or an explicit list of paths. A default directory of /input
+  has been created - use this if no command-line arguments have been set.
+- Check the extension against an allow-list (.jpg, .jpeg, .png, .tif, .tiff,
+  .bmp).
+- Reject HEIC, because OpenCV does not read it by default, with a clear
+  message. See https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html
+- Confirm each file decodes with cv2.imread. A failure raises an error.
+
+STEP 2: PAGE IDENTIFICATION (FATAL ON ERROR)
+  1. In test_aligner.py, split out the HOMOGRAPHY STAGE of align_page (ORB,
+     ratio test, RANSAC) into its own function that returns the match and
+     inlier counts. Do not change any constants.
+  2. For every input image, run only that stage against all three references
+     to build a 3x3 inlier matrix.
+  3. Assign images to pages one-to-one with the best overall assignment (for
+     example scipy.optimize.linear_sum_assignment on the negated matrix, or
+     brute force over 6 permutations for 3 pages).
+  4. Raise an error and stop for any of these:
+       - fewer or more than 3 images
+       - an image whose best inlier count is below a minimum cutoff (matches
+         no page)
+       - two images assigned to the same page
+       - a page with no image
+  5. TEST THAT PAGES 1 AND 2 ARE CLEANLY SEPARATED by inlier count, since
+     both contain Likert tables with the same header labels. Pick the cutoff
+     from the test photos.
+
+STEP 3: ALIGNMENT
+  1. Run the full align_page (homography then TPS) only against each image's
+     identified reference.
+  2. Save aligned images to a temp directory (tempfile.mkdtemp) and delete it
+     at the end.
+  3. Keep grayscale (IMREAD_GRAYSCALE), as decided. Color may exist in the
+     inputs. Note this as a known limitation: light colored ink loses
+     contrast in grayscale.
+  4. SAVE A VALIDITY MASK. The remap fills pixels outside the paper with
+     black. Apply the same remap to an all-ones mask so cells that overlap
+     out-of-frame pixels can be flagged. This matters on the page 3 photo,
+     where the right edge is cropped (the Q23 "Yes" box and the Q25 comment
+     run off the page).
+
+COMMON HELPER: DARK-PIXEL COUNTING
+- An optional BACKGROUND NORMALIZATION (settable on or off): divide the image
+  by a heavily blurred copy so shadows and lighting gradients do not count as
+  ink. Alternative: cv2.adaptiveThreshold. Test both on the three photos.
+  Scans may not need it.
+- A pixel counts as dark if its value is below DARK_THRESHOLD.
+- dark_fraction(region) = dark_pixel_count / region_area. Use a fraction
+  because cell sizes vary, so one threshold can apply everywhere.
+
+STEP 4: LIKERT DETECTION (PAGES 1 AND 2)
+- For each cell, take the INNER BOX from the reference geometry, inset by
+  LIKERT_MARGIN_PX (configurable) so misregistered grid lines are not
+  counted. The inset must not collapse small cells. Page 2's first row is
+  about 35 px tall.
+- Compute the dark fraction for each of the 6 cells per row. The answer is
+  the column with the highest fraction, provided it exceeds MARK_MIN_FRACTION.
+- Flags:
+    * blank row: no cell exceeds the threshold
+    * double mark: two or more cells exceed the threshold
+    * near-tie: the top two cells are within a configurable ratio
+    * out-of-frame: a cell overlaps invalid mask pixels
+- Continue processing after any flag.
+
+STEP 5: CHECKBOX DETECTION (PAGES 2 AND 3)
+- Use a bounding box SLIGHTLY LARGER than the printed square, with
+  CHECKBOX_PAD_PX of padding (start at about 4 px), so the printed border is
+  always fully inside despite 2-4 px misregistration.
+- Measure the empty-box baseline from the reference image, then mark a box as
+  checked if its dark fraction minus the baseline exceeds CHECK_MIN_DELTA.
+- SPILLOVER FLAG: measure a thin ring just outside the padded box. If its
+  dark fraction is high, flag it for QA. Page 3 has marks that overshoot or
+  spill into neighboring boxes (Q14, Q22-Q24).
+- GROUP-RULE FLAG (needs the group schema from Phase A): flag a group that
+  violates its rule, such as both Yes and No checked. Some groups are
+  "select all that apply", so skip the rule for those. The page 3 test photo
+  has many boxes checked on purpose, so expect many flags there.
+- Also flag out-of-frame boxes.
+
+STEP 6: HANDWRITING (PAGES 1, 2, AND 3)
+TrOCR reads ONE TEXT LINE IMAGE PER CALL and returns a string. It does not
+find text. See:
+  https://huggingface.co/docs/transformers/model_doc/trocr
+  https://huggingface.co/microsoft/trocr-small-handwritten
+  https://huggingface.co/microsoft/trocr-base-handwritten
+For each handwriting region from the geometry file:
+  1. Crop the region from the aligned image.
+  2. CLEAN UP PRINTED CONTENT.
+       - Remove horizontal underlines by morphological opening with a wide,
+         short kernel, or by masking the dilated reference underline. This
+         matters for the page 1 fields, where writing sits on the line.
+       - For regions that are blank in the reference (page 2 answers), no
+         cleanup is needed.
+  3. SEGMENT INTO LINES using a horizontal projection of the dark pixels.
+     Page 3's block-caps text runs several lines.
+  4. RECOGNIZE each line with TrOCR. Start with trocr-small-handwritten, then
+     try trocr-base-handwritten and compare. Pad the crop and keep its aspect
+     ratio. Long lines are squashed to the model's fixed input size, so if
+     accuracy suffers, split at word gaps into chunks. Confirm the input size
+     on the model card.
+  5. CONFIDENCE: compute the mean token probability from generation scores,
+     and flag low values.
+  6. Flag any region that overlaps the out-of-frame mask. The page 3 comment
+     runs off the photo edge, so text there is lost.
+  7. Join the lines of one region into a single answer string.
+
+Offline setup: Download the weights once, save them to a local folder, load
+from that path, and set HF_HUB_OFFLINE=1. Verify by running with networking
+disabled.
+
+STEP 7: JSON OUTPUT
+Keep it minimal, as decided: a list of entries with the question, the likely
+answer, and a flag. For example:
+
+  [
+    {
+      "page": 1,
+      "question": "Recognize the signs and symptoms of mental health conditions.",
+      "answer": "Neutral",
+      "flag": "none"
+    },
+    {
+      "page": 2,
+      "question": "This program was helpful for me.",
+      "answer": "Disagree",
+      "flag": "high: double mark"
+    }
+  ]
+
+The flag is a severity (none, low, high) with a short reason after it. Write
+the file to a configurable output path. If step 1 or 2 aborts, raise the
+error and end execution.
+
+
+4. CONFIGURATION (SINGLE PLACE)
+-------------------------------
+
+All values below are starting guesses to tune. None have been measured.
+
+  LIKERT_MARGIN_PX       8                      Check small page 2 row heights
+  DARK_THRESHOLD         to be tuned            Depends on whether normalization is on
+  MARK_MIN_FRACTION      0.02                   Fraction of inner area
+  NEAR_TIE_RATIO         to be tuned
+  CHECKBOX_PAD_PX        4
+  CHECK_MIN_DELTA        to be tuned            Above the empty-box baseline
+  SPILLOVER_RING_PX      to be tuned
+  NORMALIZE_BACKGROUND   on or off, test both
+  MIN_PAGE_INLIERS       from test photos
+  TROCR_MODEL_DIR        local folder
+
+
+5. VERIFICATION
+---------------
+
+For each step, run it on the three test_read_page*.jpg photos and compare
+against these readings. They are what was read by eye from the images, so
+confirm them with the user.
+
+- Page 1 handwriting: "Missouri", "Nov. 6", "St. Louis", and a teacher name
+  that reads like "Chamise".
+- Page 1 Likert table A, rows 1-6: Neutral, Agree, Strongly disagree,
+  Disagree, Strongly agree, N/A.
+- Page 1 table B, rows 1-3: Agree, Strongly disagree, Neutral.
+- Page 2: Table C has an apparent double mark in row 1 (Disagree and N/A),
+  which should trigger the double-mark flag. The five free-text answers all
+  read "I'm just here so I don't get fined." The "No" box appears checked.
+- Page 3: Many boxes are deliberately marked, with spillover and edge-cropped
+  content. Expect many flags. Establish ground truth with the user.
+
+Also check:
+- Page identification gives the right 3x3 assignment and the error cases
+  (missing, duplicate, extra, unmatched page) raise as expected.
+- Out-of-frame flags fire on the cropped page 3 edge.
+- Offline operation works with networking disabled.
+
+
+6. SUGGESTED ORDER OF WORK
+--------------------------
+
+  1. Phase A: extract and verify the geometry.
+  2. Step 1 and Step 2, with the error cases.
+  3. Step 3, with the validity mask.
+  4. Common dark-pixel helper, then Step 4 and Step 5. Tune thresholds on the
+     test photos.
+  5. Step 6: set up TrOCR offline, then region cleanup, line segmentation,
+     and recognition. Compare small and base.
+  6. Step 7: JSON assembly, then an end-to-end run.
+
+
+7. OPEN QUESTIONS TO SETTLE EARLY
+---------------------------------
+
+- Is the PDF vector? If not, use the OpenCV fallback in Phase A.
+- Which page 3 regions are meant for handwriting? Look at ref_page3.png.
+- Does the templates/ folder referenced by the aligner exist, or should
+  references point to dev_images?
