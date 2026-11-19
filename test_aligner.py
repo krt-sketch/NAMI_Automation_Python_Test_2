@@ -59,11 +59,27 @@ class Alignment:
     control_points: int  # TPS control points; 0 means only the homography was applied
 
 
+@dataclass
+class HomographyMatch:
+    homography: np.ndarray  # scan (full resolution) -> reference
+    matches: int  # matches passing the ratio test
+    inliers: int  # matches consistent with the homography
+
+
 def align_page(image_path: Path, page_type: str) -> Alignment:
     reference = cv2.imread(str(TEMPLATES_DIR / page_type / "reference.png"), cv2.IMREAD_GRAYSCALE)
     scan = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
     if reference is None or scan is None:
         raise AlignmentError(f"Could not read '{image_path}' or the {page_type} reference image")
+    match = match_page(scan, reference, image_path.name, page_type)
+    aligned, control_points = _refine(scan, reference, match.homography)
+    # _show(image_path.name, scan, reference, aligned)
+    return Alignment(image=aligned, matches=match.matches, inliers=match.inliers, control_points=control_points)
+
+
+def match_page(scan: np.ndarray, reference: np.ndarray, name: str, page_type: str) -> HomographyMatch:
+    """Homography stage of align_page: ORB features, ratio test, RANSAC. Also used on its own
+    to identify which reference page a photo shows (by inlier count)."""
     # Detect features on a copy scaled to the reference height (similar feature scale).
     scale = reference.shape[0] / scan.shape[0]
     small = cv2.resize(scan, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
@@ -72,12 +88,12 @@ def align_page(image_path: Path, page_type: str) -> Alignment:
     scan_kp, scan_des = orb.detectAndCompute(small, None)
     ref_kp, ref_des = orb.detectAndCompute(reference, None)
     if scan_des is None or ref_des is None:
-        raise AlignmentError(f"No features found for '{image_path.name}'")
+        raise AlignmentError(f"No features found for '{name}'")
 
     pairs = cv2.BFMatcher(cv2.NORM_HAMMING).knnMatch(scan_des, ref_des, k=2)
     good = [p[0] for p in pairs if len(p) == 2 and p[0].distance < RATIO_TEST * p[1].distance]
     if len(good) < MIN_MATCHES:
-        raise AlignmentError(f"Only {len(good)} feature matches for '{image_path.name}' against {page_type}")
+        raise AlignmentError(f"Only {len(good)} feature matches for '{name}' against {page_type}")
 
     # Scan points are mapped back to full-resolution coordinates before fitting,
     # so the warp below samples the original scan rather than the shrunken copy.
@@ -85,11 +101,8 @@ def align_page(image_path: Path, page_type: str) -> Alignment:
     dst = np.float32([ref_kp[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
     homography, mask = cv2.findHomography(src, dst, cv2.RANSAC, RANSAC_THRESHOLD)
     if homography is None:
-        raise AlignmentError(f"No homography found for '{image_path.name}' against {page_type}")
-
-    aligned, control_points = _refine(scan, reference, homography)
-    # _show(image_path.name, scan, reference, aligned)
-    return Alignment(image=aligned, matches=len(good), inliers=int(mask.sum()), control_points=control_points)
+        raise AlignmentError(f"No homography found for '{name}' against {page_type}")
+    return HomographyMatch(homography=homography, matches=len(good), inliers=int(mask.sum()))
 
 
 def _refine(scan: np.ndarray, reference: np.ndarray, homography: np.ndarray) -> tuple[np.ndarray, int]:
