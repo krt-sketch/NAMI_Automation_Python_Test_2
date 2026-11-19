@@ -2,23 +2,28 @@
 
 Usage:  python pipeline.py [folder | image ...]      (default: the input/ folder)
 
+The output folder is emptied at the start of every run.
+
 Implemented so far:
   Step 1  collect and validate the input images
   Step 2  identify which form page each image shows (fatal on any structural problem)
+  Step 3  align each image to its reference page; save the aligned image and its validity mask
 """
 
+import shutil
 import sys
 from pathlib import Path
 
 import cv2
 import numpy as np
 
-from test_aligner import TEMPLATES_DIR, AlignmentError, match_page
+from test_aligner import TEMPLATES_DIR, Alignment, AlignmentError, align_page, match_page
 
 ROOT = Path(__file__).resolve().parent
 
 # --- Configuration (dev_plan.txt, section 4) --------------------------------------------------
 DEFAULT_INPUT_DIR = ROOT / "input"
+OUTPUT_DIR = ROOT / "output"  # emptied at the start of every run
 PAGE_TYPES = ("page1", "page2", "page3")  # folders under templates/
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
 HEIC_EXTENSIONS = {".heic", ".heif"}
@@ -100,6 +105,33 @@ def identify_pages(images: dict[Path, np.ndarray]) -> tuple[dict[str, Path], np.
     return {PAGE_TYPES[best[i]]: path for i, path in enumerate(paths)}, inliers
 
 
+# --- Step 3: alignment --------------------------------------------------------------------------
+
+def align_pages(pages: dict[str, Path], out_dir: Path) -> dict[str, Alignment]:
+    """Full alignment (homography, then TPS) of each image to its identified reference page.
+    Saves aligned_<page>.png and valid_<page>.png (white: pixel lies inside the photo) to out_dir."""
+    aligned = {}
+    for page, path in pages.items():
+        try:
+            result = align_page(path, page)
+        except AlignmentError as error:
+            raise PipelineError(f"Alignment of '{path.name}' to {page} failed: {error}") from error
+        cv2.imwrite(str(out_dir / f"aligned_{page}.png"), result.image)
+        cv2.imwrite(str(out_dir / f"valid_{page}.png"), result.valid * 255)
+        aligned[page] = result
+    return aligned
+
+
+def clean_output(folder: Path) -> None:
+    """Create the output folder if needed and delete everything in it."""
+    folder.mkdir(exist_ok=True)
+    for item in folder.iterdir():
+        if item.is_dir() and not item.is_symlink():
+            shutil.rmtree(item)
+        else:
+            item.unlink()
+
+
 def format_matrix(images: dict[Path, np.ndarray], inliers: np.ndarray) -> str:
     width = max(len(p.name) for p in images)
     rows = [" " * width + "".join(f"{p:>8}" for p in PAGE_TYPES)]
@@ -108,12 +140,16 @@ def format_matrix(images: dict[Path, np.ndarray], inliers: np.ndarray) -> str:
 
 
 def main(args: list[str]) -> None:
+    clean_output(OUTPUT_DIR)
     images = collect_inputs(args)
     pages, inliers = identify_pages(images)
     print("RANSAC inliers (rows: images, columns: reference pages)")
     print(format_matrix(images, inliers))
+    aligned = align_pages(pages, OUTPUT_DIR)
     for page in PAGE_TYPES:
-        print(f"{page}: {pages[page].name}")
+        a = aligned[page]
+        print(f"{page}: {pages[page].name}  matches {a.matches}, inliers {a.inliers}, "
+              f"TPS control points {a.control_points}, inside photo {a.valid.mean():.1%}")
 
 
 if __name__ == "__main__":

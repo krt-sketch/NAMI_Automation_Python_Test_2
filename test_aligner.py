@@ -54,6 +54,7 @@ class AlignmentError(Exception):
 @dataclass
 class Alignment:
     image: np.ndarray  # grayscale, reference size
+    valid: np.ndarray  # uint8, reference size: 1 where the pixel came from inside the scan, 0 off it
     matches: int  # matches passing the ratio test
     inliers: int  # matches consistent with the final homography
     control_points: int  # TPS control points; 0 means only the homography was applied
@@ -72,9 +73,10 @@ def align_page(image_path: Path, page_type: str) -> Alignment:
     if reference is None or scan is None:
         raise AlignmentError(f"Could not read '{image_path}' or the {page_type} reference image")
     match = match_page(scan, reference, image_path.name, page_type)
-    aligned, control_points = _refine(scan, reference, match.homography)
+    aligned, valid, control_points = _refine(scan, reference, match.homography)
     # _show(image_path.name, scan, reference, aligned)
-    return Alignment(image=aligned, matches=match.matches, inliers=match.inliers, control_points=control_points)
+    return Alignment(image=aligned, valid=valid, matches=match.matches, inliers=match.inliers,
+                     control_points=control_points)
 
 
 def match_page(scan: np.ndarray, reference: np.ndarray, name: str, page_type: str) -> HomographyMatch:
@@ -105,8 +107,12 @@ def match_page(scan: np.ndarray, reference: np.ndarray, name: str, page_type: st
     return HomographyMatch(homography=homography, matches=len(good), inliers=int(mask.sum()))
 
 
-def _refine(scan: np.ndarray, reference: np.ndarray, homography: np.ndarray) -> tuple[np.ndarray, int]:
-    """Correct a non-flat page. Returns (aligned image, number of TPS control points).
+def _refine(scan: np.ndarray, reference: np.ndarray, homography: np.ndarray) -> tuple[np.ndarray, np.ndarray, int]:
+    """Correct a non-flat page. Returns (aligned image, validity mask, number of TPS control points).
+
+    The validity mask is an all-ones image warped the same way: 1 where the aligned pixel was
+    sampled from inside the scan, 0 where it lies off the scan (remap and warpPerspective fill
+    those with 0 by default, as they do the black area of the aligned image).
 
     The TPS maps reference pixels to pixels of the homography-aligned image. Each pass
     matches features only within `radius` of each other, so repeated text and table
@@ -115,24 +121,13 @@ def _refine(scan: np.ndarray, reference: np.ndarray, homography: np.ndarray) -> 
     """
     h, w = reference.shape
     coarse = cv2.warpPerspective(scan, homography, (w, h))
+    ones = np.ones_like(scan)
     orb = cv2.ORB_create(DENSE_FEATURES)
     ref_kp, ref_des = orb.detectAndCompute(reference, None)
     if ref_des is None:
-        return coarse, 0
+        return coarse, cv2.warpPerspective(ones, homography, (w, h), flags=cv2.INTER_NEAREST), 0
     ref_pts = np.float32([k.pt for k in ref_kp])
-
-    # Reference grid the TPS is evaluated on, and how to interpolate it to every pixel.
-    gw, gh = w // GRID_STEP + 1, h // GRID_STEP + 1
-    gx, gy = np.meshgrid(np.linspace(0, w - 1, gw, dtype=np.float32), np.linspace(0, h - 1, gh, dtype=np.float32))
-    grid = np.dstack([gx, gy]).reshape(1, -1, 2)
-    ux, uy = np.meshgrid(np.arange(w, dtype=np.float32) * (gw - 1) / (w - 1),
-                         np.arange(h, dtype=np.float32) * (gh - 1) / (h - 1))
-
-    def to_maps(points: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        """Grid of mapped points -> per-pixel (map_x, map_y) for cv2.remap (bilinear, corner-aligned)."""
-        g = points.reshape(gh, gw, 2)
-        return (cv2.remap(np.ascontiguousarray(g[..., 0]), ux, uy, cv2.INTER_LINEAR),
-                cv2.remap(np.ascontiguousarray(g[..., 1]), ux, uy, cv2.INTER_LINEAR))
+    grid, ux, uy = _tps_grid(w, h)
 
     tps, control_points, current = None, 0, coarse
     for radius in LOCAL_RADII:
@@ -152,13 +147,35 @@ def _refine(scan: np.ndarray, reference: np.ndarray, homography: np.ndarray) -> 
         tps.estimateTransformation(cp.reshape(1, -1, 2), target.reshape(1, -1, 2),
                                    [cv2.DMatch(i, i, 0) for i in range(len(cp))])
         control_points = len(cp)
-        current = cv2.remap(coarse, *to_maps(tps.applyTransformation(grid)[1]), cv2.INTER_LINEAR)
+        current = cv2.remap(coarse, *_to_maps(tps.applyTransformation(grid)[1], ux, uy), cv2.INTER_LINEAR)
 
     if tps is None:
-        return coarse, 0
+        return coarse, cv2.warpPerspective(ones, homography, (w, h), flags=cv2.INTER_NEAREST), 0
     # One resample of the original scan: reference -> TPS -> inverse homography -> scan.
     scan_points = cv2.perspectiveTransform(tps.applyTransformation(grid)[1].reshape(-1, 1, 2), np.linalg.inv(homography))
-    return cv2.remap(scan, *to_maps(scan_points), cv2.INTER_LINEAR), control_points
+    maps = _to_maps(scan_points, ux, uy)
+    return cv2.remap(scan, *maps, cv2.INTER_LINEAR), cv2.remap(ones, *maps, cv2.INTER_NEAREST), control_points
+
+
+def _tps_grid(w: int, h: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Reference grid the TPS is evaluated on (every GRID_STEP px, corners included), shaped
+    (1, N, 2), and the per-pixel grid coordinates (ux, uy) that interpolate it to every pixel."""
+    gw, gh = w // GRID_STEP + 1, h // GRID_STEP + 1
+    gx, gy = np.meshgrid(np.linspace(0, w - 1, gw, dtype=np.float32), np.linspace(0, h - 1, gh, dtype=np.float32))
+    grid = np.dstack([gx, gy]).reshape(1, -1, 2)
+    ux, uy = np.meshgrid(np.arange(w, dtype=np.float32) * (gw - 1) / (w - 1),
+                         np.arange(h, dtype=np.float32) * (gh - 1) / (h - 1))
+    return grid, ux, uy
+
+
+def _to_maps(points: np.ndarray, ux: np.ndarray, uy: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Grid of mapped points -> per-pixel (map_x, map_y) for cv2.remap (bilinear, corner-aligned).
+
+    ux and uy come from _tps_grid; their last values are gw - 1 and gh - 1, the grid's shape."""
+    gw, gh = round(float(ux[0, -1])) + 1, round(float(uy[-1, 0])) + 1
+    g = points.reshape(gh, gw, 2)
+    return (cv2.remap(np.ascontiguousarray(g[..., 0]), ux, uy, cv2.INTER_LINEAR),
+            cv2.remap(np.ascontiguousarray(g[..., 1]), ux, uy, cv2.INTER_LINEAR))
 
 
 def _local_matches(orb, image: np.ndarray, ref_pts: np.ndarray, ref_des: np.ndarray, radius: int):
