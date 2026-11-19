@@ -1,0 +1,457 @@
+{
+ "page": 1,
+ "source": "dev_images/ref_full_document.pdf",
+ "units": "reference pixels (pt * 200 / 72); rect = [x0, y0, x1, y1], x1 and y1 exclusive",
+ "likert_tables": [
+  {
+   "name": "A",
+   "columns": [
+    "Strongly agree",
+    "Agree",
+    "Neutral",
+    "Disagree",
+    "Strongly disagree",
+    "N/A"
+   ],
+   "rows": [
+    {
+     "question": "Recognize the signs and symptoms of mental health conditions.",
+     "cells": [
+      [
+       775,
+       884,
+       905,
+       959
+      ],
+      [
+       908,
+       884,
+       1010,
+       959
+      ],
+      [
+       1012,
+       884,
+       1131,
+       959
+      ],
+      [
+       1133,
+       884,
+       1272,
+       959
+      ],
+      [
+       1274,
+       884,
+       1409,
+       959
+      ],
+      [
+       1412,
+       884,
+       1498,
+       959
+      ]
+     ]
+    },
+    {
+     "question": "Understand the type of services people with mental health conditions need.",
+     "cells": [
+      [
+       775,
+       962,
+       905,
+       1076
+      ],
+      [
+       908,
+       962,
+       1010,
+       1076
+      ],
+      [
+       1012,
+       962,
+       1131,
+       1076
+      ],
+      [
+       1133,
+       962,
+       1272,
+       1076
+      ],
+      [
+       1274,
+       962,
+       1409,
+       1076
+      ],
+      [
+       1412,
+       962,
+       1498,
+       1076
+      ]
+     ]
+    },
+    {
+     "question": "Understand what “living in recovery” with a mental health condition means.",
+     "cells": [
+      [
+       775,
+       1078,
+       905,
+       1192
+      ],
+      [
+       908,
+       1078,
+       1010,
+       1192
+      ],
+      [
+       1012,
+       1078,
+       1131,
+       1192
+      ],
+      [
+       1133,
+       1078,
+       1272,
+       1192
+      ],
+      [
+       1274,
+       1078,
+       1409,
+       1192
+      ],
+      [
+       1412,
+       1078,
+       1498,
+       1192
+      ]
+     ]
+    },
+    {
+     "question": "Manage crises that may result from mental health condition symptoms.",
+     "cells": [
+      [
+       775,
+       1195,
+       905,
+       1270
+      ],
+      [
+       908,
+       1195,
+       1010,
+       1270
+      ],
+      [
+       1012,
+       1195,
+       1131,
+       1270
+      ],
+      [
+       1133,
+       1195,
+       1272,
+       1270
+      ],
+      [
+       1274,
+       1195,
+       1409,
+       1270
+      ],
+      [
+       1412,
+       1195,
+       1498,
+       1270
+      ]
+     ]
+    },
+    {
+     "question": "Manage the stresses and negative impacts that the stigma of mental health conditions may cause me.",
+     "cells": [
+      [
+       775,
+       1273,
+       905,
+       1387
+      ],
+      [
+       908,
+       1273,
+       1010,
+       1387
+      ],
+      [
+       1012,
+       1273,
+       1131,
+       1387
+      ],
+      [
+       1133,
+       1273,
+       1272,
+       1387
+      ],
+      [
+       1274,
+       1273,
+       1409,
+       1387
+      ],
+      [
+       1412,
+       1273,
+       1498,
+       1387
+      ]
+     ]
+    },
+    {
+     "question": "Access the care and support services that my family member or I need.",
+     "cells": [
+      [
+       775,
+       1389,
+       905,
+       1503
+      ],
+      [
+       908,
+       1389,
+       1010,
+       1503
+      ],
+      [
+       1012,
+       1389,
+       1131,
+       1503
+      ],
+      [
+       1133,
+       1389,
+       1272,
+       1503
+      ],
+      [
+       1274,
+       1389,
+       1409,
+       1503
+      ],
+      [
+       1412,
+       1389,
+       1498,
+       1503
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "B",
+   "columns": [
+    "Strongly agree",
+    "Agree",
+    "Neutral",
+    "Disagree",
+    "Strongly disagree",
+    "N/A"
+   ],
+   "rows": [
+    {
+     "question": "I see the symptoms of the mental health condition as separate from the person who has the condition.",
+     "cells": [
+      [
+       775,
+       1649,
+       905,
+       1763
+      ],
+      [
+       908,
+       1649,
+       1010,
+       1763
+      ],
+      [
+       1012,
+       1649,
+       1131,
+       1763
+      ],
+      [
+       1133,
+       1649,
+       1272,
+       1763
+      ],
+      [
+       1274,
+       1649,
+       1409,
+       1763
+      ],
+      [
+       1412,
+       1649,
+       1498,
+       1763
+      ]
+     ]
+    },
+    {
+     "question": "I believe mental health conditions are no one’s fault.",
+     "cells": [
+      [
+       775,
+       1765,
+       905,
+       1841
+      ],
+      [
+       908,
+       1765,
+       1010,
+       1841
+      ],
+      [
+       1012,
+       1765,
+       1131,
+       1841
+      ],
+      [
+       1133,
+       1765,
+       1272,
+       1841
+      ],
+      [
+       1274,
+       1765,
+       1409,
+       1841
+      ],
+      [
+       1412,
+       1765,
+       1498,
+       1841
+      ]
+     ]
+    },
+    {
+     "question": "I believe that people have a right and a responsibility to question their treatment provider and take an active role in their treatment",
+     "cells": [
+      [
+       775,
+       1843,
+       905,
+       1996
+      ],
+      [
+       908,
+       1843,
+       1010,
+       1996
+      ],
+      [
+       1012,
+       1843,
+       1131,
+       1996
+      ],
+      [
+       1133,
+       1843,
+       1272,
+       1996
+      ],
+      [
+       1274,
+       1843,
+       1409,
+       1996
+      ],
+      [
+       1412,
+       1843,
+       1498,
+       1996
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "checkbox_groups": [],
+ "handwriting": [
+  {
+   "question": "State where I took NAMI Basics",
+   "rect": [
+    648,
+    358,
+    1399,
+    436
+   ],
+   "underline_y": 414,
+   "optional": false,
+   "number": null,
+   "printed_ink": 0.0139
+  },
+  {
+   "question": "Date you finished your NAMI Basics course",
+   "rect": [
+    806,
+    436,
+    1404,
+    514
+   ],
+   "underline_y": 492,
+   "optional": false,
+   "number": null,
+   "printed_ink": 0.0139
+  },
+  {
+   "question": "Location of Basics Course (include city)",
+   "rect": [
+    754,
+    514,
+    1403,
+    592
+   ],
+   "underline_y": 570,
+   "optional": false,
+   "number": null,
+   "printed_ink": 0.0188
+  },
+  {
+   "question": "Please list the names of your NAMI Basics Teachers",
+   "rect": [
+    932,
+    592,
+    1410,
+    670
+   ],
+   "underline_y": 648,
+   "optional": false,
+   "number": null,
+   "printed_ink": 0.019
+  }
+ ]
+}

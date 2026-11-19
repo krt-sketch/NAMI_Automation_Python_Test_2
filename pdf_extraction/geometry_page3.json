@@ -1,0 +1,685 @@
+{
+ "page": 3,
+ "source": "dev_images/ref_full_document.pdf",
+ "units": "reference pixels (pt * 200 / 72); rect = [x0, y0, x1, y1], x1 and y1 exclusive",
+ "likert_tables": [],
+ "checkbox_groups": [
+  {
+   "question": "13. The following statements apply to me. (Select all that apply)",
+   "number": "13",
+   "multiple": true,
+   "boxes": [
+    {
+     "label": "Person living with a mental illness/ mental health disorder",
+     "rect": [
+      125,
+      382,
+      147,
+      404
+     ]
+    },
+    {
+     "label": "Family member of a person living with a mental illness/ mental health disorder",
+     "rect": [
+      125,
+      429,
+      147,
+      451
+     ]
+    },
+    {
+     "label": "Parent or caregiver of a child, youth or young adult with a behavioral health disorder",
+     "rect": [
+      125,
+      474,
+      147,
+      496
+     ]
+    },
+    {
+     "label": "Mental health provider or other professional",
+     "rect": [
+      125,
+      520,
+      147,
+      542
+     ]
+    },
+    {
+     "label": "None",
+     "rect": [
+      125,
+      566,
+      147,
+      588
+     ]
+    }
+   ]
+  },
+  {
+   "question": "14. I am a Missouri resident.",
+   "number": "14",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Yes",
+     "rect": [
+      491,
+      650,
+      513,
+      672
+     ]
+    },
+    {
+     "label": "No",
+     "rect": [
+      574,
+      650,
+      596,
+      672
+     ]
+    }
+   ]
+  },
+  {
+   "question": "15.Background/Occupation",
+   "number": "15",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Student",
+     "rect": [
+      127,
+      745,
+      149,
+      767
+     ]
+    },
+    {
+     "label": "Educator",
+     "rect": [
+      127,
+      783,
+      149,
+      805
+     ]
+    },
+    {
+     "label": "Law enforcement",
+     "rect": [
+      127,
+      820,
+      149,
+      842
+     ]
+    },
+    {
+     "label": "Physician/Nurse",
+     "rect": [
+      127,
+      859,
+      149,
+      881
+     ]
+    },
+    {
+     "label": "Social Worker",
+     "rect": [
+      127,
+      897,
+      149,
+      919
+     ]
+    },
+    {
+     "label": "Mental Health Provider",
+     "rect": [
+      127,
+      935,
+      149,
+      957
+     ]
+    },
+    {
+     "label": "Other",
+     "rect": [
+      127,
+      1009,
+      149,
+      1031
+     ]
+    }
+   ]
+  },
+  {
+   "question": "16. Ethnicity/ Race",
+   "number": "16",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Black or African American",
+     "rect": [
+      474,
+      745,
+      496,
+      767
+     ]
+    },
+    {
+     "label": "Asian",
+     "rect": [
+      474,
+      820,
+      496,
+      842
+     ]
+    },
+    {
+     "label": "Bi/Multi-Racial",
+     "rect": [
+      474,
+      859,
+      496,
+      881
+     ]
+    },
+    {
+     "label": "Caucasian",
+     "rect": [
+      474,
+      897,
+      496,
+      919
+     ]
+    },
+    {
+     "label": "Hispanic/ Latino",
+     "rect": [
+      474,
+      935,
+      496,
+      957
+     ]
+    },
+    {
+     "label": "Hawaiian/Pacific Islander",
+     "rect": [
+      474,
+      1011,
+      495,
+      1032
+     ]
+    },
+    {
+     "label": "Native American/ Alaskan Native",
+     "rect": [
+      474,
+      1084,
+      495,
+      1105
+     ]
+    },
+    {
+     "label": "Other",
+     "rect": [
+      476,
+      1192,
+      497,
+      1213
+     ]
+    }
+   ]
+  },
+  {
+   "question": "18.Sexual Orientation",
+   "number": "18",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Straight/ Heterosexual",
+     "rect": [
+      939,
+      747,
+      961,
+      768
+     ]
+    },
+    {
+     "label": "Lesbian",
+     "rect": [
+      939,
+      821,
+      961,
+      842
+     ]
+    },
+    {
+     "label": "Gay",
+     "rect": [
+      939,
+      860,
+      961,
+      881
+     ]
+    },
+    {
+     "label": "Bisexual",
+     "rect": [
+      939,
+      898,
+      961,
+      919
+     ]
+    },
+    {
+     "label": "Other",
+     "rect": [
+      939,
+      935,
+      960,
+      956
+     ]
+    }
+   ]
+  },
+  {
+   "question": "19. Age",
+   "number": "19",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Under 18",
+     "rect": [
+      1202,
+      747,
+      1223,
+      768
+     ]
+    },
+    {
+     "label": "18-24",
+     "rect": [
+      1202,
+      821,
+      1223,
+      842
+     ]
+    },
+    {
+     "label": "25-34",
+     "rect": [
+      1202,
+      860,
+      1223,
+      881
+     ]
+    },
+    {
+     "label": "35-44",
+     "rect": [
+      1202,
+      898,
+      1223,
+      919
+     ]
+    },
+    {
+     "label": "45-54",
+     "rect": [
+      1202,
+      935,
+      1223,
+      956
+     ]
+    },
+    {
+     "label": "55-64",
+     "rect": [
+      1202,
+      972,
+      1223,
+      993
+     ]
+    },
+    {
+     "label": "65-74",
+     "rect": [
+      1202,
+      1011,
+      1223,
+      1032
+     ]
+    },
+    {
+     "label": "75-84",
+     "rect": [
+      1202,
+      1048,
+      1223,
+      1069
+     ]
+    },
+    {
+     "label": "85+",
+     "rect": [
+      1202,
+      1085,
+      1223,
+      1106
+     ]
+    }
+   ]
+  },
+  {
+   "question": "20. Military Status",
+   "number": "20",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Active Military",
+     "rect": [
+      1352,
+      747,
+      1372,
+      767
+     ]
+    },
+    {
+     "label": "Veteran",
+     "rect": [
+      1352,
+      784,
+      1372,
+      804
+     ]
+    },
+    {
+     "label": "Family Member (of military service member or veteran)",
+     "rect": [
+      1352,
+      826,
+      1372,
+      846
+     ]
+    },
+    {
+     "label": "None",
+     "rect": [
+      1352,
+      971,
+      1372,
+      991
+     ]
+    }
+   ]
+  },
+  {
+   "question": "17. Gender",
+   "number": "17",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Female",
+     "rect": [
+      738,
+      745,
+      760,
+      767
+     ]
+    },
+    {
+     "label": "Male",
+     "rect": [
+      738,
+      783,
+      760,
+      805
+     ]
+    },
+    {
+     "label": "Non-binary",
+     "rect": [
+      737,
+      821,
+      757,
+      841
+     ]
+    },
+    {
+     "label": "Other",
+     "rect": [
+      739,
+      859,
+      761,
+      880
+     ]
+    }
+   ]
+  },
+  {
+   "question": "22. How do you describe your community?",
+   "number": "22",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Rural",
+     "rect": [
+      664,
+      1373,
+      686,
+      1395
+     ]
+    },
+    {
+     "label": "Urban",
+     "rect": [
+      763,
+      1373,
+      785,
+      1395
+     ]
+    },
+    {
+     "label": "Suburban",
+     "rect": [
+      874,
+      1373,
+      896,
+      1395
+     ]
+    }
+   ]
+  },
+  {
+   "question": "23. Are you the parent/ caregiver of a child, youth, or young adult up to age 25 w/ a mental health condition?",
+   "number": "23",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Yes",
+     "rect": [
+      1430,
+      1425,
+      1452,
+      1446
+     ]
+    },
+    {
+     "label": "No",
+     "rect": [
+      1510,
+      1425,
+      1531,
+      1446
+     ]
+    }
+   ]
+  },
+  {
+   "question": "24. If yes, does your child, youth, or young adult up to age 25 have BOTH a mental health condition AND autism, a learning disability, or a developmental disability?",
+   "number": "24",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Yes",
+     "rect": [
+      811,
+      1518,
+      832,
+      1539
+     ]
+    },
+    {
+     "label": "No",
+     "rect": [
+      890,
+      1518,
+      911,
+      1539
+     ]
+    }
+   ]
+  },
+  {
+   "question": "25. Have you ever experienced homelessness?",
+   "number": "25",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Yes",
+     "rect": [
+      709,
+      1568,
+      731,
+      1590
+     ]
+    },
+    {
+     "label": "No",
+     "rect": [
+      792,
+      1568,
+      814,
+      1590
+     ]
+    }
+   ]
+  },
+  {
+   "question": "26. Have you ever been jailed or incarcerated?",
+   "number": "26",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Yes",
+     "rect": [
+      710,
+      1619,
+      732,
+      1641
+     ]
+    },
+    {
+     "label": "No",
+     "rect": [
+      793,
+      1619,
+      815,
+      1641
+     ]
+    }
+   ]
+  },
+  {
+   "question": "27. Have you ever had a substance use disorder? (drugs or alcohol)",
+   "number": "27",
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Yes",
+     "rect": [
+      963,
+      1670,
+      985,
+      1692
+     ]
+    },
+    {
+     "label": "No",
+     "rect": [
+      1046,
+      1670,
+      1068,
+      1692
+     ]
+    }
+   ]
+  }
+ ],
+ "handwriting": [
+  {
+   "question": "21. Zip code (optional)",
+   "rect": [
+    403,
+    1291,
+    583,
+    1370
+   ],
+   "underline_y": 1347,
+   "optional": true,
+   "number": "21",
+   "printed_ink": 0.0253
+  },
+  {
+   "question": "15.Background/Occupation - Other (write-in)",
+   "rect": [
+    243,
+    980,
+    466,
+    1055
+   ],
+   "underline_y": null,
+   "optional": true,
+   "number": "15",
+   "write_in_for": {
+    "question": "15.Background/Occupation",
+    "label": "Other"
+   },
+   "printed_ink": 0.0074
+  },
+  {
+   "question": "16. Ethnicity/ Race - Other (write-in)",
+   "rect": [
+    584,
+    1163,
+    730,
+    1237
+   ],
+   "underline_y": 1217,
+   "optional": true,
+   "number": "16",
+   "write_in_for": {
+    "question": "16. Ethnicity/ Race",
+    "label": "Other"
+   },
+   "printed_ink": 0.052
+  },
+  {
+   "question": "17. Gender - Other (write-in)",
+   "rect": [
+    843,
+    830,
+    931,
+    904
+   ],
+   "underline_y": null,
+   "optional": true,
+   "number": "17",
+   "write_in_for": {
+    "question": "17. Gender",
+    "label": "Other"
+   },
+   "printed_ink": 0.0336
+  }
+ ]
+}
