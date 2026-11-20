@@ -11,6 +11,7 @@ Implemented so far:
   Step 4  read the Likert tables (pages 1 and 2)
   Step 5  read the checkboxes (pages 2 and 3)
   Step 6  read the handwriting regions with TrOCR (ocr.py), line by line
+  Step 7  write the results, in form order, to RESULTS_PATH as JSON
 
 Each answer carries a flag: "none", or "<severity>: <reason>[; <reason>...]" with severity
 low or high. Detection problems are flagged and processing continues.
@@ -31,6 +32,8 @@ ROOT = Path(__file__).resolve().parent
 # --- Configuration (dev_plan.txt, section 4) --------------------------------------------------
 DEFAULT_INPUT_DIR = ROOT / "input"
 OUTPUT_DIR = ROOT / "output"  # emptied at the start of every run
+RESULTS_PATH = OUTPUT_DIR / "results.json"  # step 7 output
+ROW_TOLERANCE_PX = 20  # result order: items whose tops are this close count as one row
 PAGE_TYPES = ("page1", "page2", "page3")  # folders under templates/
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
 HEIC_EXTENSIONS = {".heic", ".heif"}
@@ -244,6 +247,7 @@ def read_likert(geometry: dict, dark: np.ndarray, valid: np.ndarray, page_number
             if flag == "none" and answer is None:
                 flag = "none: blank"
             results.append({"page": page_number, "question": row["question"], "answer": answer, "flag": flag,
+                            "position": (row["cells"][0][1], row["cells"][0][0]),
                             "fractions": [round(f, 3) for f in fractions]})
     return results
 
@@ -292,8 +296,10 @@ def read_checkboxes(geometry: dict, dark: np.ndarray, valid: np.ndarray, ref_dar
                 reasons.append(("high", "no box checked"))
         elif group["number"] not in CONDITIONAL_GROUPS and len(checked) != 1:
             reasons.append(("high", f"{len(checked)} boxes checked, expected 1"))
+        first = group["boxes"][0]["rect"]
         results.append({"page": page_number, "question": group["question"], "answer": checked,
-                        "reasons": reasons, "number": group["number"], "scores": scores})
+                        "reasons": reasons, "number": group["number"], "position": (first[1], first[0]),
+                        "scores": scores})
     return results
 
 
@@ -414,9 +420,30 @@ def read_text(aligned: dict[str, tuple[np.ndarray, np.ndarray]], reader, out_dir
             flag = make_flag(reasons)
             if answer is None and flag == "none":
                 flag = "none: blank"
+            if "write_in_for" in h:  # listed right after its checkbox question
+                group = next(g for g in geometry["checkbox_groups"] if g["question"] == h["write_in_for"]["question"])
+                position = (group["boxes"][0]["rect"][1], group["boxes"][0]["rect"][0] + 0.5)
+            else:
+                position = (h["rect"][1], h["rect"][0])
             results.append({"page": number, "question": h["question"], "answer": answer, "flag": flag,
-                            "confidence": [round(c, 3) for _, c in read], "ink": round(fraction, 4)})
+                            "position": position, "confidence": [round(c, 3) for _, c in read],
+                            "ink": round(fraction, 4)})
     return results
+
+
+# --- Step 7: JSON output ------------------------------------------------------------------------
+
+def form_order(results: list[dict]) -> list[dict]:
+    """Page by page, top to bottom, left to right. Items whose tops are within ROW_TOLERANCE_PX
+    count as one row (the page 3 columns 15-20 start at slightly different heights)."""
+    return sorted(results, key=lambda r: (r["page"], round(r["position"][0] / ROW_TOLERANCE_PX), r["position"][1]))
+
+
+def write_results(results: list[dict], path: Path) -> None:
+    """The minimal result file: page, question, answer (text, list of checked labels, or null), flag."""
+    entries = [{k: r[k] for k in ("page", "question", "answer", "flag")} for r in form_order(results)]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(entries, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def clean_output(folder: Path) -> None:
@@ -452,8 +479,10 @@ def main(args: list[str]) -> None:
     from ocr import HandwritingReader
     reader = HandwritingReader(TROCR_MODEL_DIR, OCR_MAX_NEW_TOKENS)
     results = read_marks(images) + read_text(images, reader, OUTPUT_DIR)
-    for r in results:
+    for r in form_order(results):
         print(f"p{r['page']} {r['question'][:60]:<60} {str(r['answer']):<28} {r['flag']}")
+    write_results(results, RESULTS_PATH)
+    print(f"Results: {RESULTS_PATH}")
 
 
 if __name__ == "__main__":
