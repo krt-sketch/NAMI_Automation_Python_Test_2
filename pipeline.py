@@ -66,6 +66,9 @@ CONDITIONAL_GROUPS = {"24": ("23", "Yes")}  # Q24 is answered only when Q23 is "
 # Handwriting (starting values; tuned with ocr_tests/explore_handwriting.py)
 TROCR_MODEL_DIR = ROOT / "models" / "trocr-small-handwritten"  # local copy from download_models.py
 OCR_MAX_NEW_TOKENS = 48
+# 1 = greedy decoding; >1 = beam search. ocr_tests/compare_decoding.py on the test document:
+# beam 2 fixed "Chamise" (greedy: "Classie"); widths 3-8 read the same as 2 but slower.
+OCR_NUM_BEAMS = 2
 HANDWRITING_PRINTED_DILATE_PX = 3  # reference ink grown by this much is removed (inpainted) before reading
 INPAINT_RADIUS_PX = 3  # neighborhood used to fill removed printed pixels
 UNDERLINE_BAND_PX = 10  # leftover underline is searched this far above and below the printed one
@@ -477,7 +480,7 @@ def main(args: list[str]) -> None:
 
     images = {page: (a.image, a.valid > 0) for page, a in aligned.items()}
     from ocr import HandwritingReader
-    reader = HandwritingReader(TROCR_MODEL_DIR, OCR_MAX_NEW_TOKENS)
+    reader = HandwritingReader(TROCR_MODEL_DIR, OCR_MAX_NEW_TOKENS, OCR_NUM_BEAMS)
     results = read_marks(images) + read_text(images, reader, OUTPUT_DIR)
     for r in form_order(results):
         print(f"p{r['page']} {r['question'][:60]:<60} {str(r['answer']):<28} {r['flag']}")
