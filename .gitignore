@@ -224,3 +224,6 @@ __marimo__/
 
 # Pipeline run outputs (emptied at the start of each run)
 output/
+
+# Model weights, downloaded once (see download_models.py)
+models/

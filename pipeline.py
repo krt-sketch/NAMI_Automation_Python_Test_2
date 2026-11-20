@@ -10,6 +10,7 @@ Implemented so far:
   Step 3  align each image to its reference page; save the aligned image and its validity mask
   Step 4  read the Likert tables (pages 1 and 2)
   Step 5  read the checkboxes (pages 2 and 3)
+  Step 6  read the handwriting regions with TrOCR (ocr.py), line by line
 
 Each answer carries a flag: "none", or "<severity>: <reason>[; <reason>...]" with severity
 low or high. Detection problems are flagged and processing continues.
@@ -58,6 +59,23 @@ SPILLOVER_RING_PX = 15  # ring outside the padded box searched for marks that mi
 SPILLOVER_MIN_FRACTION = 0.02  # dark fraction of the ring (printed text excluded) that is flagged
 PRINTED_DILATE_PX = 3  # reference ink grown by this much is ignored in the ring (label text)
 CONDITIONAL_GROUPS = {"24": ("23", "Yes")}  # Q24 is answered only when Q23 is "Yes"
+
+# Handwriting (starting values; tuned with ocr_tests/explore_handwriting.py)
+TROCR_MODEL_DIR = ROOT / "models" / "trocr-small-handwritten"  # local copy from download_models.py
+OCR_MAX_NEW_TOKENS = 48
+HANDWRITING_PRINTED_DILATE_PX = 3  # reference ink grown by this much is removed (inpainted) before reading
+INPAINT_RADIUS_PX = 3  # neighborhood used to fill removed printed pixels
+UNDERLINE_BAND_PX = 10  # leftover underline is searched this far above and below the printed one
+UNDERLINE_MIN_RUN_PX = 80  # a horizontal ink run at least this long near the underline is removed
+UNDERLINE_THRESHOLD = 230  # normalized value below which underline residue counts (lighter than ink)
+LINE_MIN_INK_PX = 2  # a pixel row with at least this much ink belongs to a text line
+LINE_MERGE_GAP_PX = 12  # text bands closer than this are one line (ascenders, descenders, dots)
+LINE_MIN_HEIGHT_PX = 12  # thinner bands are noise
+LINE_MIN_INK_FRACTION = 0.002  # a region with less ink than this share of its area is blank
+CROP_PAD_PX = 12  # white margin around each line crop
+CROP_MODE = "squash"  # "squash" (as TrOCR was trained) or "square"; see ocr.line_image
+OCR_MIN_CONFIDENCE = 0.5  # mean token probability below this is flagged (to be tuned)
+OUT_OF_FRAME_INK_PX = 20  # flag a region when ink comes this close to pixels off the photo
 
 
 class PipelineError(Exception):
@@ -153,16 +171,21 @@ def align_pages(pages: dict[str, Path], out_dir: Path) -> dict[str, Alignment]:
 
 # --- Common helper: dark pixels -----------------------------------------------------------------
 
-def dark_mask(gray: np.ndarray) -> np.ndarray:
-    """True where a pixel is ink. With NORMALIZE_BACKGROUND the image is first divided by a
-    heavily blurred copy of itself, so paper reads ~255 under any lighting.
+def normalize(gray: np.ndarray) -> np.ndarray:
+    """With NORMALIZE_BACKGROUND: the image divided by a heavily blurred copy of itself, so
+    paper reads ~255 under any lighting. Otherwise the image unchanged.
     https://docs.opencv.org/4.x/d4/d86/group__imgproc__filter.html#gae8bdcd9154ed5ca3cbc1766d960f45c1
     https://docs.opencv.org/4.x/d2/de8/group__core__array.html#ga6db555d30115642fedae0cda05604874
     """
     if not NORMALIZE_BACKGROUND:
-        return gray < DARK_THRESHOLD_RAW
+        return gray
     background = cv2.GaussianBlur(gray, (0, 0), BACKGROUND_SIGMA)
-    return cv2.divide(gray, np.maximum(background, 1), scale=255) < DARK_THRESHOLD
+    return cv2.divide(gray, np.maximum(background, 1), scale=255)
+
+
+def dark_mask(gray: np.ndarray) -> np.ndarray:
+    """True where a pixel is ink."""
+    return normalize(gray) < (DARK_THRESHOLD if NORMALIZE_BACKGROUND else DARK_THRESHOLD_RAW)
 
 
 def dark_fraction(dark: np.ndarray, valid: np.ndarray, rect) -> tuple[float, bool]:
@@ -306,6 +329,96 @@ def read_marks(aligned: dict[str, tuple[np.ndarray, np.ndarray]]) -> list[dict]:
     return likert + boxes
 
 
+# --- Step 6: handwriting ------------------------------------------------------------------------
+
+def text_bands(ink: np.ndarray) -> list[tuple[int, int]]:
+    """Text lines as (top, bottom) row ranges, from the horizontal projection of the ink."""
+    rows = np.flatnonzero(ink.sum(axis=1) >= LINE_MIN_INK_PX)
+    bands = []
+    for r in rows:
+        if bands and r - bands[-1][1] <= LINE_MERGE_GAP_PX:
+            bands[-1][1] = r + 1
+        else:
+            bands.append([r, r + 1])
+    return [(a, b) for a, b in bands if b - a >= LINE_MIN_HEIGHT_PX]
+
+
+def region_lines(h: dict, norm: np.ndarray, valid: np.ndarray, printed: np.ndarray) -> tuple[list, float, bool]:
+    """(line crops, ink fraction, ink near the photo edge) for one handwriting region.
+
+    Printed content (reference ink, and any underline left over from misregistration, found
+    with the lighter UNDERLINE_THRESHOLD so faint residue goes too) is filled in from its
+    surroundings by inpainting, so handwriting that crosses an underline stays connected.
+    Gray levels are kept: faint pen strokes have soft edges that thresholding would break.
+    https://docs.opencv.org/4.x/d7/d8b/group__photo__inpaint.html
+    """
+    x0, y0, x1, y1 = h["rect"]
+    threshold = DARK_THRESHOLD if NORMALIZE_BACKGROUND else DARK_THRESHOLD_RAW
+    img = norm[y0:y1, x0:x1].copy()
+    v = valid[y0:y1, x0:x1]
+    removed = printed[y0:y1, x0:x1].copy()
+    if h["underline_y"] is not None:
+        b0 = max(0, h["underline_y"] - y0 - UNDERLINE_BAND_PX)
+        b1 = h["underline_y"] - y0 + UNDERLINE_BAND_PX + 1
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (UNDERLINE_MIN_RUN_PX, 1))
+        faint = (img[b0:b1] < UNDERLINE_THRESHOLD).astype(np.uint8)
+        removed[b0:b1] |= cv2.morphologyEx(faint, cv2.MORPH_OPEN, kernel) > 0
+    img = cv2.inpaint(img, removed.astype(np.uint8), INPAINT_RADIUS_PX, cv2.INPAINT_TELEA)
+    img[~v] = 255
+    ink = img < threshold
+    reach = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * OUT_OF_FRAME_INK_PX + 1,) * 2)
+    near_edge = bool((cv2.dilate(ink.astype(np.uint8), reach).astype(bool) & ~v).any())
+    fraction = float(ink.mean())
+    if fraction < LINE_MIN_INK_FRACTION:
+        return [], fraction, near_edge
+    crops = []
+    for top, bottom in text_bands(ink):
+        cols = np.flatnonzero(ink[top:bottom].any(axis=0))
+        crops.append(img[top:bottom, cols[0]:cols[-1] + 1])
+    return crops, fraction, near_edge
+
+
+def read_text(aligned: dict[str, tuple[np.ndarray, np.ndarray]], reader, out_dir: Path | None) -> list[dict]:
+    """Step 6 on {page type: (aligned image, validity mask)}. Line crops are saved to
+    out_dir/lines/ when out_dir is given."""
+    from ocr import line_image  # imports torch and transformers; only needed for this step
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * HANDWRITING_PRINTED_DILATE_PX + 1,) * 2)
+    if out_dir:
+        (out_dir / "lines").mkdir(exist_ok=True)
+    results = []
+    for number, page in enumerate(PAGE_TYPES, start=1):
+        geometry = load_geometry(page)
+        image, valid = aligned[page]
+        reference = cv2.imread(str(TEMPLATES_DIR / page / "reference.png"), cv2.IMREAD_GRAYSCALE)
+        printed = cv2.dilate(dark_mask(reference).astype(np.uint8), kernel) > 0
+        norm = normalize(image)
+        regions = [region_lines(h, norm, valid, printed) for h in geometry["handwriting"]]
+        crops = [line_image(c, CROP_MODE, CROP_PAD_PX) for lines, _, _ in regions for c in lines]
+        texts = iter(reader.read(crops) if crops else [])
+        crop_index = iter(range(len(crops)))
+        for k, (h, (lines, fraction, near_edge)) in enumerate(zip(geometry["handwriting"], regions)):
+            read = []
+            for line in range(len(lines)):
+                i = next(crop_index)
+                read.append(next(texts))
+                if out_dir:
+                    cv2.imwrite(str(out_dir / "lines" / f"p{number}_r{k + 1}_l{line + 1}.png"), crops[i])
+            reasons = []
+            if near_edge:
+                reasons.append(("high", "out of frame: writing reaches the photo edge"))
+            low = [f"{t!r} {c:.2f}" for t, c in read if c < OCR_MIN_CONFIDENCE]
+            if low:
+                reasons.append(("low", f"low OCR confidence: {', '.join(low)}"))
+            answer = " ".join(t for t, _ in read) or None
+            flag = make_flag(reasons)
+            if answer is None and flag == "none":
+                flag = "none: blank"
+            results.append({"page": number, "question": h["question"], "answer": answer, "flag": flag,
+                            "confidence": [round(c, 3) for _, c in read], "ink": round(fraction, 4)})
+    return results
+
+
 def clean_output(folder: Path) -> None:
     """Create the output folder if needed and delete everything in it."""
     folder.mkdir(exist_ok=True)
@@ -335,7 +448,10 @@ def main(args: list[str]) -> None:
         print(f"{page}: {pages[page].name}  matches {a.matches}, inliers {a.inliers}, "
               f"TPS control points {a.control_points}, inside photo {a.valid.mean():.1%}")
 
-    results = read_marks({page: (a.image, a.valid > 0) for page, a in aligned.items()})
+    images = {page: (a.image, a.valid > 0) for page, a in aligned.items()}
+    from ocr import HandwritingReader
+    reader = HandwritingReader(TROCR_MODEL_DIR, OCR_MAX_NEW_TOKENS)
+    results = read_marks(images) + read_text(images, reader, OUTPUT_DIR)
     for r in results:
         print(f"p{r['page']} {r['question'][:60]:<60} {str(r['answer']):<28} {r['flag']}")
 
