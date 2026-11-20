@@ -79,6 +79,10 @@ LINE_MERGE_GAP_PX = 12  # text bands closer than this are one line (ascenders, d
 LINE_MIN_HEIGHT_PX = 12  # thinner bands are noise
 LINE_MIN_INK_FRACTION = 0.002  # a region with less ink than this share of its area is blank
 CROP_PAD_PX = 12  # white margin around each line crop
+# Line splitting (ocr_tests/explore_line_splitting.py: max 8 gave mean CER 0.069 vs 0.080 whole;
+# smaller pieces lost context, e.g. "St. Louis" -> "5t leaves")
+LINE_SPLIT_MAX_ASPECT = 8  # lines longer than this x their height are cut into pieces about this long
+LINE_SPLIT_GAP_FACTOR = 0.25  # an empty-column run at least this x the line height is a word gap
 CROP_MODE = "squash"  # "squash" (as TrOCR was trained) or "square"; see ocr.line_image
 OCR_MIN_CONFIDENCE = 0.5  # mean token probability below this is flagged (to be tuned)
 OUT_OF_FRAME_INK_PX = 20  # flag a region when ink comes this close to pixels off the photo
@@ -387,9 +391,34 @@ def region_lines(h: dict, norm: np.ndarray, valid: np.ndarray, printed: np.ndarr
     return crops, fraction, near_edge
 
 
+def split_line(gray: np.ndarray) -> list[np.ndarray]:
+    """Cut a line crop longer than LINE_SPLIT_MAX_ASPECT x its height at word gaps (empty-column
+    runs at least LINE_SPLIT_GAP_FACTOR x the height wide) into pieces that are, where the gaps
+    allow, at most that long. TrOCR squashes every input to 384x384, so shorter pieces keep the
+    letters closer to their shape (tested in ocr_tests/explore_line_splitting.py)."""
+    height, width = gray.shape
+    if width <= LINE_SPLIT_MAX_ASPECT * height:
+        return [gray]
+    threshold = DARK_THRESHOLD if NORMALIZE_BACKGROUND else DARK_THRESHOLD_RAW
+    inked = np.flatnonzero((gray < threshold).any(axis=0))
+    words, start = [], inked[0]
+    for a, b in zip(inked, inked[1:]):
+        if b - a - 1 >= LINE_SPLIT_GAP_FACTOR * height:
+            words.append([start, a + 1])
+            start = b
+    words.append([start, inked[-1] + 1])
+    pieces = [words[0]]
+    for a, b in words[1:]:
+        if b - pieces[-1][0] <= LINE_SPLIT_MAX_ASPECT * height:
+            pieces[-1][1] = b
+        else:
+            pieces.append([a, b])
+    return [gray[:, a:b] for a, b in pieces]
+
+
 def read_text(aligned: dict[str, tuple[np.ndarray, np.ndarray]], reader, out_dir: Path | None) -> list[dict]:
-    """Step 6 on {page type: (aligned image, validity mask)}. Line crops are saved to
-    out_dir/lines/ when out_dir is given."""
+    """Step 6 on {page type: (aligned image, validity mask)}. The images TrOCR reads (line
+    pieces) are saved to out_dir/lines/ when out_dir is given."""
     from ocr import line_image  # imports torch and transformers; only needed for this step
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * HANDWRITING_PRINTED_DILATE_PX + 1,) * 2)
@@ -402,17 +431,20 @@ def read_text(aligned: dict[str, tuple[np.ndarray, np.ndarray]], reader, out_dir
         reference = cv2.imread(str(TEMPLATES_DIR / page / "reference.png"), cv2.IMREAD_GRAYSCALE)
         printed = cv2.dilate(dark_mask(reference).astype(np.uint8), kernel) > 0
         norm = normalize(image)
-        regions = [region_lines(h, norm, valid, printed) for h in geometry["handwriting"]]
-        crops = [line_image(c, CROP_MODE, CROP_PAD_PX) for lines, _, _ in regions for c in lines]
+        regions = []
+        for h in geometry["handwriting"]:
+            lines, fraction, near_edge = region_lines(h, norm, valid, printed)
+            regions.append(([p for line in lines for p in split_line(line)], fraction, near_edge))
+        crops = [line_image(p, CROP_MODE, CROP_PAD_PX) for pieces, _, _ in regions for p in pieces]
         texts = iter(reader.read(crops) if crops else [])
         crop_index = iter(range(len(crops)))
-        for k, (h, (lines, fraction, near_edge)) in enumerate(zip(geometry["handwriting"], regions)):
+        for k, (h, (pieces, fraction, near_edge)) in enumerate(zip(geometry["handwriting"], regions)):
             read = []
-            for line in range(len(lines)):
+            for piece in range(len(pieces)):
                 i = next(crop_index)
                 read.append(next(texts))
                 if out_dir:
-                    cv2.imwrite(str(out_dir / "lines" / f"p{number}_r{k + 1}_l{line + 1}.png"), crops[i])
+                    cv2.imwrite(str(out_dir / "lines" / f"p{number}_r{k + 1}_s{piece + 1}.png"), crops[i])
             reasons = []
             if near_edge:
                 reasons.append(("high", "out of frame: writing reaches the photo edge"))
