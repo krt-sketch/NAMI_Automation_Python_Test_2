@@ -1,0 +1,319 @@
+{
+ "page": 2,
+ "source": "dev_images/ref_full_document.pdf",
+ "units": "reference pixels (pt * 200 / 72); rect = [x0, y0, x1, y1], x1 and y1 exclusive",
+ "likert_tables": [
+  {
+   "name": "C",
+   "columns": [
+    "Strongly agree",
+    "Agree",
+    "Neutral",
+    "Disagree",
+    "Strongly disagree",
+    "N/A"
+   ],
+   "rows": [
+    {
+     "question": "This program was helpful for me.",
+     "cells": [
+      [
+       775,
+       306,
+       906,
+       343
+      ],
+      [
+       908,
+       306,
+       1010,
+       343
+      ],
+      [
+       1012,
+       306,
+       1131,
+       343
+      ],
+      [
+       1133,
+       306,
+       1272,
+       343
+      ],
+      [
+       1275,
+       306,
+       1410,
+       343
+      ],
+      [
+       1412,
+       306,
+       1498,
+       343
+      ]
+     ]
+    },
+    {
+     "question": "I have learned information that was new to me.",
+     "cells": [
+      [
+       775,
+       345,
+       906,
+       421
+      ],
+      [
+       908,
+       345,
+       1010,
+       421
+      ],
+      [
+       1012,
+       345,
+       1131,
+       421
+      ],
+      [
+       1133,
+       345,
+       1272,
+       421
+      ],
+      [
+       1275,
+       345,
+       1410,
+       421
+      ],
+      [
+       1412,
+       345,
+       1498,
+       421
+      ]
+     ]
+    },
+    {
+     "question": "The leaders of this program communicated effectively.",
+     "cells": [
+      [
+       775,
+       423,
+       906,
+       499
+      ],
+      [
+       908,
+       423,
+       1010,
+       499
+      ],
+      [
+       1012,
+       423,
+       1131,
+       499
+      ],
+      [
+       1133,
+       423,
+       1272,
+       499
+      ],
+      [
+       1275,
+       423,
+       1410,
+       499
+      ],
+      [
+       1412,
+       423,
+       1498,
+       499
+      ]
+     ]
+    },
+    {
+     "question": "The written materials were useful for me.",
+     "cells": [
+      [
+       775,
+       501,
+       906,
+       577
+      ],
+      [
+       908,
+       501,
+       1010,
+       577
+      ],
+      [
+       1012,
+       501,
+       1131,
+       577
+      ],
+      [
+       1133,
+       501,
+       1272,
+       577
+      ],
+      [
+       1275,
+       501,
+       1410,
+       577
+      ],
+      [
+       1412,
+       501,
+       1498,
+       577
+      ]
+     ]
+    },
+    {
+     "question": "I would recommend this program to others.",
+     "cells": [
+      [
+       775,
+       579,
+       906,
+       655
+      ],
+      [
+       908,
+       579,
+       1010,
+       655
+      ],
+      [
+       1012,
+       579,
+       1131,
+       655
+      ],
+      [
+       1133,
+       579,
+       1272,
+       655
+      ],
+      [
+       1275,
+       579,
+       1410,
+       655
+      ],
+      [
+       1412,
+       579,
+       1498,
+       655
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "checkbox_groups": [
+  {
+   "question": "I am willing to let NAMI use my responses and comments used anonymously for research and marketing purposes (NAMI will not use your name or any information that identifies you):",
+   "number": null,
+   "multiple": false,
+   "boxes": [
+    {
+     "label": "Yes",
+     "rect": [
+      202,
+      1975,
+      216,
+      1989
+     ]
+    },
+    {
+     "label": "No",
+     "rect": [
+      358,
+      1975,
+      372,
+      1989
+     ]
+    }
+   ]
+  }
+ ],
+ "handwriting": [
+  {
+   "question": "1. What do you think of the teaching team that led your class?",
+   "rect": [
+    201,
+    736,
+    1490,
+    902
+   ],
+   "underline_y": null,
+   "optional": false,
+   "number": "1",
+   "printed_ink": 0.0
+  },
+  {
+   "question": "2. What personal changes have you made, or do you expect to make, because of participating in this course?",
+   "rect": [
+    201,
+    982,
+    1490,
+    1148
+   ],
+   "underline_y": null,
+   "optional": false,
+   "number": "2",
+   "printed_ink": 0.0
+  },
+  {
+   "question": "3. What additional resources and/or information would be helpful to you?",
+   "rect": [
+    201,
+    1193,
+    1490,
+    1358
+   ],
+   "underline_y": null,
+   "optional": false,
+   "number": "3",
+   "printed_ink": 0.0
+  },
+  {
+   "question": "4. What is one suggestion you have for making this program better?",
+   "rect": [
+    201,
+    1404,
+    1490,
+    1569
+   ],
+   "underline_y": null,
+   "optional": false,
+   "number": "4",
+   "printed_ink": 0.0
+  },
+  {
+   "question": "5. Please tell us about a moment during the course when something about your personal experience suddenly made more sense. Was there a moment where you gained insight and understanding into an experience you’ve had?",
+   "rect": [
+    201,
+    1685,
+    1490,
+    1886
+   ],
+   "underline_y": null,
+   "optional": false,
+   "number": "5",
+   "printed_ink": 0.0
+  }
+ ]
+}
