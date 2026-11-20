@@ -1,0 +1,20 @@
+# NAMI form reader - Python 3.14 (.venv). Versions are the ones tested.
+# Install:  python -m pip install -r requirements.txt
+# Requirements file format: https://pip.pypa.io/en/stable/reference/requirements-file-format/
+
+# CPU-only PyTorch builds (no NVIDIA GPU needed): https://pytorch.org/get-started/locally/
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Pipeline (pipeline.py, test_aligner.py)
+opencv-contrib-python==5.1.0.95  # contrib build: the aligner needs cv2.createThinPlateSplineShapeTransformer
+numpy==2.5.5
+
+# Handwriting OCR (ocr.py, download_models.py)
+torch==2.15.0+cpu
+transformers==5.23.0
+huggingface_hub==2.4.0
+pillow==13.0.0  # not imported directly: transformers needs it for the TrOCR image processors
+sentencepiece==0.2.3  # not imported directly: trocr-small-handwritten's tokenizer needs it
+
+# Development only: template geometry extraction (pdf_extraction/extract_geometry.py)
+pymupdf==2.1
